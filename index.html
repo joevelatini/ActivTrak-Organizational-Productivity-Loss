@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ActivTrak Organizational Productivity Loss</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #0070cd;
+            margin-bottom: 20px;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+        .logo-icon {
+            margin-right: 12px;
+            width: 60px;
+            height: 60px;
+        }
+        h1, h2, h3 {
+            color: #333;
+            margin-top: 0;
+        }
+        .settings {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .file-upload {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #0070cd;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:hover {
+            background-color: #00529b;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .demo-button {
+            background-color: #00529b;
+            margin-left: 10px;
+        }
+        .error {
+            background-color: #ffebee;
+            border-left: 4px solid #f44336;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #d32f2f;
+        }
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            font-weight: 600;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #0070cd;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .bar {
+            height: 30px;
+            background-color: #0070cd;
+            display: flex;
+            align-items: center;
+            color: white;
+            padding: 0 10px;
+        }
+        .red-text {
+            color: #d32f2f;
+        }
+        .info-card {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .columns-container {
+            display: flex;
+            gap: 20px;
+        }
+        .column {
+            flex: 1;
+        }
+        ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+            margin-top: 30px;
+        }
+        .hidden {
+            display: none;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <!-- ActivTrak logo styled triangles -->
+                        <polygon points="100,20 30,130 170,130" fill="#0070CD" />
+                        <polygon points="80,60 40,130 120,130" fill="#00B2A9" />
+                        <polygon points="80,90 60,130 100,130" fill="#2D3E50" />
+                    </svg>
+                </div>
+                <h1>ActivTrak Organizational Productivity Loss</h1>
+            </div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="settings">
+            <h2>Analysis Settings</h2>
+            <div style="display: flex; gap: 20px;">
+                <div class="form-group" style="flex: 1;">
+                    <label for="goalHours">Productivity Goal (hours/day)</label>
+                    <input type="number" id="goalHours" min="1" max="24" step="0.1" value="7.5">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label for="annualSalary">Annual Salary for Cost Calculation ($)</label>
+                    <input type="number" id="annualSalary" min="10000" step="1000" value="60000">
+                </div>
+            </div>
+        </div>
+
+        <!-- File Upload -->
+        <div class="file-upload">
+            <h2>Upload and Configure Data</h2>
+            <div class="form-group">
+                <label for="csvFile">Upload CSV File</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="file" id="csvFile" accept=".csv">
+                    <button id="demoButton" class="demo-button">Use Sample Data</button>
+                </div>
+            </div>
+            
+            <div id="columnSelectors" class="hidden">
+                <div style="display: flex; gap: 20px;">
+                    <div class="form-group" style="flex: 1;">
+                        <label for="productiveHoursColumn">Productive Hours Column</label>
+                        <select id="productiveHoursColumn">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="flex: 1;">
+                        <label for="meetingHoursColumn">Meeting Hours Column</label>
+                        <select id="meetingHoursColumn">
+                            <option value="">-- Select Column --</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="analyzeButton" disabled>Analyze Data</button>
+            </div>
+        </div>
+
+        <!-- Error message -->
+        <div id="errorContainer" class="error hidden"></div>
+
+        <!-- Loading indicator -->
+        <div id="loadingContainer" class="loading hidden">
+            Processing data...
+        </div>
+
+        <!-- Results container -->
+        <div id="resultsContainer" class="hidden">
+            <h2 style="color: #0070cd;">Productivity Distribution (Goal: <span id="displayGoal">7.5</span> hrs.)</h2>
+            
+            <!-- Distribution Table -->
+            <h3>Productivity Categories</h3>
+            <table id="categoriesTable">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th class="text-right">Employee Count</th>
+                        <th class="text-right">% of Workforce</th>
+                        <th class="text-right">Delta Hours</th>
+                        <th class="text-right">FTE</th>
+                        <th class="text-right">Monthly Cost</th>
+                    </tr>
+                </thead>
+                <tbody id="categoriesTableBody">
+                    <!-- Categories data will be inserted here -->
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td><strong>Total</strong></td>
+                        <td class="text-right" id="totalEmployees">135</td>
+                        <td class="text-right">100%</td>
+                        <td class="text-right" id="totalDeltaHours">161.00</td>
+                        <td class="text-right" id="totalFTE">20.13</td>
+                        <td class="text-right" id="totalMonthlyCost">$100,625</td>
+                    </tr>
+                </tfoot>
+            </table>
+            
+            <!-- Opportunity Table -->
+            <h2 style="color: #0070cd;">Productivity Opportunity</h2>
+            <div class="info-card">
+                <p>
+                    This analysis shows the <strong>cumulative impact</strong> of addressing productivity gaps, 
+                    starting from the most severe cases.
+                </p>
+            </div>
+            
+            <table id="opportunityTable">
+                <thead>
+                    <tr>
+                        <th>Categories Included</th>
+                        <th class="text-right">Employee Count</th>
+                        <th class="text-right">% of Workforce</th>
+                        <th class="text-right">Total Delta Hours</th>
+                        <th class="text-right">FTE</th>
+                        <th class="text-right">Monthly Cost</th>
+                    </tr>
+                </thead>
+                <tbody id="opportunityTableBody">
+                    <!-- Opportunity data will be inserted here -->
+                </tbody>
+            </table>
+            
+            <!-- Methodology and Insights -->
+            <div class="columns-container">
+                <div class="column info-card">
+                    <h3>Calculation Methodology</h3>
+                    <ul>
+                        <li>Combined Hours = Productive Hours + Meeting Hours</li>
+                        <li>Delta = Goal Hours - Combined Hours</li>
+                        <li>Classifications:
+                            <ul>
+                                <li><strong>Over goal</strong>: Combined Hours > Goal Hours</li>
+                                <li><strong>At goal</strong>: Combined Hours = Goal Hours (exactly)</li>
+                                <li><strong>&lt; 7.5 hrs</strong>: 7 ≤ Combined Hours &lt; Goal Hours</li>
+                                <li><strong>&lt; 7 hrs</strong>: 6 ≤ Combined Hours &lt; 7</li>
+                                <li><strong>&lt; 6 hrs</strong>: 5 ≤ Combined Hours &lt; 6</li>
+                                <li><strong>&lt; 5 hrs</strong>: 4 ≤ Combined Hours &lt; 5</li>
+                                <li><strong>&lt; 4 hrs</strong>: Combined Hours &lt; 4</li>
+                            </ul>
+                        </li>
+                        <li>FTE = Delta Hours ÷ 8</li>
+                        <li>Monthly Cost = FTE × (Annual Salary ÷ 12)</li>
+                    </ul>
+                </div>
+                <div class="column info-card">
+                    <h3>Key Insights</h3>
+                    <ul id="insightsList">
+                        <!-- Insights will be inserted here -->
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Data Sample -->
+            <h3>Data Sample (First 10 Records)</h3>
+            <div style="overflow-x: auto;">
+                <table id="sampleTable">
+                    <thead>
+                        <tr>
+                            <th>Employee</th>
+                            <th class="text-right">Productive Hours</th>
+                            <th class="text-right">Meeting Hours</th>
+                            <th class="text-right">Combined Hours</th>
+                            <th class="text-right">Delta</th>
+                            <th>Classification</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sampleTableBody">
+                        <!-- Sample data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="footer">
+            ActivTrak Organizational Productivity Loss | Data analysis based on CSV upload
+        </div>
+    </div>
+
+    <script>
+        // Main variables
+        let data = [];
+        let headers = [];
+        let selectedColumns = {
+            productiveHours: '',
+            meetingHours: ''
+        };
+        let analysisResults = null;
+        
+        // DOM elements
+        const goalHoursInput = document.getElementById('goalHours');
+        const annualSalaryInput = document.getElementById('annualSalary');
+        const csvFileInput = document.getElementById('csvFile');
+        const demoButton = document.getElementById('demoButton');
+        const columnSelectors = document.getElementById('columnSelectors');
+        const productiveHoursColumnSelect = document.getElementById('productiveHoursColumn');
+        const meetingHoursColumnSelect = document.getElementById('meetingHoursColumn');
+        const analyzeButton = document.getElementById('analyzeButton');
+        const errorContainer = document.getElementById('errorContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        // Event listeners
+        csvFileInput.addEventListener('change', handleFileUpload);
+        demoButton.addEventListener('click', useSampleData);
+        productiveHoursColumnSelect.addEventListener('change', updateAnalyzeButtonState);
+        meetingHoursColumnSelect.addEventListener('change', updateAnalyzeButtonState);
+        analyzeButton.addEventListener('click', analyzeData);
+        goalHoursInput.addEventListener('change', () => {
+            document.getElementById('displayGoal').textContent = goalHoursInput.value;
+        });
+        
+        // Functions
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            loadingContainer.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                dynamicTyping: true,
+                complete: function(results) {
+                    loadingContainer.classList.add('hidden');
+                    
+                    if (results.data && results.data.length > 0) {
+                        data = results.data;
+                        headers = Object.keys(results.data[0]);
+                        populateColumnSelectors();
+                        columnSelectors.classList.remove('hidden');
+                    } else {
+                        showError("No data found in the CSV file.");
+                    }
+                },
+                error: function(error) {
+                    loadingContainer.classList.add('hidden');
+                    showError(`Error parsing CSV: ${error.message}`);
+                }
+            });
+        }
+        
+        function populateColumnSelectors() {
+            // Clear existing options except the first one
+            while (productiveHoursColumnSelect.options.length > 1) {
+                productiveHoursColumnSelect.remove(1);
+            }
+            
+            while (meetingHoursColumnSelect.options.length > 1) {
+                meetingHoursColumnSelect.remove(1);
+            }
+            
+            // Add new options
+            headers.forEach(header => {
+                const productiveOption = document.createElement('option');
+                productiveOption.value = header;
+                productiveOption.textContent = header;
+                productiveHoursColumnSelect.appendChild(productiveOption);
+                
+                const meetingOption = document.createElement('option');
+                meetingOption.value = header;
+                meetingOption.textContent = header;
+                meetingHoursColumnSelect.appendChild(meetingOption);
+            });
+        }
+        
+        function updateAnalyzeButtonState() {
+            selectedColumns.productiveHours = productiveHoursColumnSelect.value;
+            selectedColumns.meetingHours = meetingHoursColumnSelect.value;
+            
+            analyzeButton.disabled = !selectedColumns.productiveHours || !selectedColumns.meetingHours;
+        }
+        
+        function showError(message) {
+            errorContainer.textContent = message;
+            errorContainer.classList.remove('hidden');
+        }
+        
+        function analyzeData() {
+            loadingContainer.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            
+            const goalHours = parseFloat(goalHoursInput.value);
+            const annualSalary = parseFloat(annualSalaryInput.value);
+            
+            try {
+                // Process the data
+                const employeeData = data.map(row => {
+                    const productiveHours = parseFloat(row[selectedColumns.productiveHours]) || 0;
+                    const meetingHours = parseFloat(row[selectedColumns.meetingHours]) || 0;
+                    const combinedHours = productiveHours + meetingHours;
+                    const delta = goalHours - combinedHours; // Positive delta means under goal
+                    
+                    // Classify based on combined hours
+                    let classification;
+                    if (combinedHours > goalHours + 0.01) classification = "Over goal";
+                    else if (Math.abs(combinedHours - goalHours) <= 0.01) classification = "At goal";
+                    else if (combinedHours >= 7) classification = `< ${goalHours} hrs`;
+                    else if (combinedHours >= 6) classification = "< 7 hrs";
+                    else if (combinedHours >= 5) classification = "< 6 hrs";
+                    else if (combinedHours >= 4) classification = "< 5 hrs";
+                    else classification = "< 4 hrs";
+                    
+                    return {
+                        ...row,
+                        productiveHours,
+                        meetingHours,
+                        combinedHours,
+                        delta,
+                        classification
+                    };
+                });
+                
+                // Group by classification
+                const grouped = _.groupBy(employeeData, 'classification');
+                
+                // Sort order for classifications
+                const sortOrder = {
+                    "Over goal": 1,
+                    "At goal": 2,
+                    [`< ${goalHours} hrs`]: 3,
+                    "< 7 hrs": 4,
+                    "< 6 hrs": 5,
+                    "< 5 hrs": 6,
+                    "< 4 hrs": 7
+                };
+                
+                // Calculate metrics for each classification
+                let classifications = Object.keys(grouped).map(classification => {
+                    const employees = grouped[classification];
+                    const count = employees.length;
+                    const percentage = ((count / employeeData.length) * 100).toFixed(1);
+                    
+                    // Calculate total delta hours (only for underperforming categories)
+                    let deltaHours = 0;
+                    if (classification !== "Over goal" && classification !== "At goal") {
+                        deltaHours = employees.reduce((sum, emp) => sum + Math.max(0, emp.delta), 0);
+                    }
+                    
+                    // Calculate FTE and cost
+                    const fte = (deltaHours / 8).toFixed(2);
+                    const monthlyCost = (deltaHours / 8) * (annualSalary / 12);
+                    
+                    return {
+                        classification,
+                        count,
+                        percentage,
+                        deltaHours: deltaHours.toFixed(2),
+                        fte,
+                        monthlyCost: Math.round(monthlyCost)
+                    };
+                });
+                
+                // Sort classifications
+                classifications = _.sortBy(classifications, item => sortOrder[item.classification] || 999);
+                
+                // Calculate cumulative values for opportunity tiers
+                let cumulativeData = [];
+                
+                // Define tiers for accumulation
+                const tiers = [`< ${goalHours} hrs`, "< 7 hrs", "< 6 hrs", "< 5 hrs", "< 4 hrs"];
+                
+                // Process tiers
+                for (const tier of tiers) {
+                    let tierEmployees = [];
+                    
+                    // Collect all employees in this tier and below
+                    for (const classification of classifications) {
+                        if (tier === `< ${goalHours} hrs` && 
+                            ["< 4 hrs", "< 5 hrs", "< 6 hrs", "< 7 hrs", `< ${goalHours} hrs`].includes(classification.classification)) {
+                            tierEmployees = tierEmployees.concat(grouped[classification.classification]);
+                        } 
+                        else if (tier === "< 7 hrs" && 
+                                ["< 4 hrs", "< 5 hrs", "< 6 hrs", "< 7 hrs"].includes(classification.classification)) {
+                            tierEmployees = tierEmployees.concat(grouped[classification.classification]);
+                        }
+                        else if (tier === "< 6 hrs" && 
+                                ["< 4 hrs", "< 5 hrs", "< 6 hrs"].includes(classification.classification)) {
+                            tierEmployees = tierEmployees.concat(grouped[classification.classification]);
+                        }
+                        else if (tier === "< 5 hrs" && 
+                                ["< 4 hrs", "< 5 hrs"].includes(classification.classification)) {
+                            tierEmployees = tierEmployees.concat(grouped[classification.classification]);
+                        }
+                        else if (tier === "< 4 hrs" && 
+                                classification.classification === "< 4 hrs") {
+                            tierEmployees = tierEmployees.concat(grouped[classification.classification]);
+                        }
+                    }
+                    
+                    // Calculate metrics for this tier
+                    const employeeCount = tierEmployees.length;
+                    const percentage = ((employeeCount / employeeData.length) * 100).toFixed(1);
+                    const deltaHours = tierEmployees.reduce((sum, emp) => sum + Math.max(0, emp.delta), 0);
+                    const fte = (deltaHours / 8).toFixed(2);
+                    const monthlyCost = Math.round((deltaHours / 8) * (annualSalary / 12));
+                    
+                    cumulativeData.push({
+                        tier,
+                        employeeCount,
+                        percentage,
+                        deltaHours: deltaHours.toFixed(2),
+                        fte,
+                        monthlyCost
+                    });
+                }
+                
+                // Calculate totals
+                const totalEmployees = employeeData.length;
+                
+                // Get all employees below goal
+                const belowGoalEmployees = employeeData.filter(emp => 
+                    emp.classification !== "Over goal" && emp.classification !== "At goal"
+                );
+                
+                const totalDeltaHours = belowGoalEmployees.reduce(
+                    (sum, emp) => sum + Math.max(0, emp.delta), 0
+                ).toFixed(2);
+                
+                const totalFTE = (parseFloat(totalDeltaHours) / 8).toFixed(2);
+                const totalMonthlyCost = Math.round((parseFloat(totalDeltaHours) / 8) * (annualSalary / 12));
+                
+                // Set the results
+                analysisResults = {
+                    classifications,
+                    cumulativeData,
+                    totalEmployees,
+                    totalDeltaHours,
+                    totalFTE,
+                    totalMonthlyCost,
+                    employeeData: employeeData.slice(0, 10) // Just include first 10 for sample
+                };
+                
+                // Display the results
+                displayResults();
+                
+            } catch (err) {
+                loadingContainer.classList.add('hidden');
+                showError(`Analysis error: ${err.message}`);
+            }
+        }
+        
+        function generateSampleAnalysis() {
+            const goalHours = parseFloat(goalHoursInput.value);
+            const annualSalary = parseFloat(annualSalaryInput.value);
+            
+            // Create sample data with specified distribution
+            const totalEmployees = 135;
+            
+            // Classification categories
+            const classifications = [
+                { classification: "< 4 hrs", count: 3, percentage: (3/135*100).toFixed(1), deltaHours: "10.50", fte: "1.31", monthlyCost: 6550 },
+                { classification: "< 5 hrs", count: 7, percentage: (7/135*100).toFixed(1), deltaHours: "17.50", fte: "2.19", monthlyCost: 10950 },
+                { classification: "< 6 hrs", count: 15, percentage: (15/135*100).toFixed(1), deltaHours: "22.50", fte: "2.81", monthlyCost: 14050 },
+                { classification: "< 7 hrs", count: 25, percentage: (25/135*100).toFixed(1), deltaHours: "25.00", fte: "3.13", monthlyCost: 15650 },
+                { classification: `< ${goalHours} hrs`, count: 52, percentage: (52/135*100).toFixed(1), deltaHours: "26.00", fte: "3.25", monthlyCost: 16250 },
+                { classification: "At goal", count: 8, percentage: (8/135*100).toFixed(1), deltaHours: "0.00", fte: "0.00", monthlyCost: 0 },
+                { classification: "Over goal", count: 25, percentage: (25/135*100).toFixed(1), deltaHours: "0.00", fte: "0.00", monthlyCost: 0 }
+            ];
+            
+            // Cumulative data
+            const cumulativeData = [
+                { 
+                    tier: `< ${goalHours} hrs`, 
+                    employeeCount: 102, 
+                    percentage: (102/135*100).toFixed(1),
+                    deltaHours: "101.50",
+                    fte: "12.69",
+                    monthlyCost: 63450
+                },
+                { 
+                    tier: "< 7 hrs", 
+                    employeeCount: 50, 
+                    percentage: (50/135*100).toFixed(1),
+                    deltaHours: "75.50",
+                    fte: "9.44",
+                    monthlyCost: 47200
+                },
+                { 
+                    tier: "< 6 hrs", 
+                    employeeCount: 25, 
+                    percentage: (25/135*100).toFixed(1),
+                    deltaHours: "50.50",
+                    fte: "6.31",
+                    monthlyCost: 31550
+                },
+                { 
+                    tier: "< 5 hrs", 
+                    employeeCount: 10, 
+                    percentage: (10/135*100).toFixed(1),
+                    deltaHours: "28.00",
+                    fte: "3.50",
+                    monthlyCost: 17500
+                },
+                { 
+                    tier: "< 4 hrs", 
+                    employeeCount: 3, 
+                    percentage: (3/135*100).toFixed(1),
+                    deltaHours: "10.50",
+                    fte: "1.31",
+                    monthlyCost: 6550
+                }
+            ];
+            
+            // Generate sample employee data
+            const employeeData = [];
+            
+            // Sample employee categories
+            const categories = [
+                { classification: "< 4 hrs", productiveHours: 2.8, meetingHours: 1.0 },
+                { classification: "< 5 hrs", productiveHours: 3.5, meetingHours: 0.8 },
+                { classification: "< 6 hrs", productiveHours: 4.5, meetingHours: 1.0 },
+                { classification: "< 7 hrs", productiveHours: 5.5, meetingHours: 1.0 },
+                { classification: `< ${goalHours} hrs`, productiveHours: 6.5, meetingHours: 0.8 },
+                { classification: "At goal", productiveHours: 6.5, meetingHours: 1.0 },
+                { classification: "Over goal", productiveHours: 7.0, meetingHours: 1.5 }
+            ];
+            
+            // Create 10 sample employees
+            for (let i = 0; i < 10; i++) {
+                const category = categories[i % categories.length];
+                const productiveHours = category.productiveHours + (Math.random() * 0.4 - 0.2);
+                const meetingHours = category.meetingHours + (Math.random() * 0.4 - 0.2);
+                const combinedHours = productiveHours + meetingHours;
+                const delta = goalHours - combinedHours;
+                
+                employeeData.push({
+                    employeeId: `EMP${i+1}`,
+                    productiveHours,
+                    meetingHours,
+                    combinedHours,
+                    delta,
+                    classification: category.classification
+                });
+            }
+            
+            // Set analysis results
+            analysisResults = {
+                classifications,
+                cumulativeData,
+                totalEmployees,
+                totalDeltaHours: "101.50",
+                totalFTE: "12.69",
+                totalMonthlyCost: 63450,
+                employeeData
+            };
+        }
+        
+        function useSampleData() {
+            loadingContainer.classList.remove('hidden');
+            errorContainer.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+            
+            // Clear file input
+            csvFileInput.value = '';
+            
+            setTimeout(() => {
+                // Generate sample data
+                generateSampleAnalysis();
+                // Display the results
+                displayResults();
+                loadingContainer.classList.add('hidden');
+            }, 500);
+        }
+        
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+        
+        function displayResults() {
+            if (!analysisResults) return;
+            
+            // Update goal hours display
+            document.getElementById('displayGoal').textContent = goalHoursInput.value;
+            
+            // Update categories table
+            const categoriesTableBody = document.getElementById('categoriesTableBody');
+            categoriesTableBody.innerHTML = '';
+            
+            analysisResults.classifications.forEach(category => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${category.classification}</td>
+                    <td class="text-right">${category.count}</td>
+                    <td class="text-right">${category.percentage}%</td>
+                    <td class="text-right">${category.deltaHours}</td>
+                    <td class="text-right">${category.fte}</td>
+                    <td class="text-right">${formatCurrency(category.monthlyCost)}</td>
+                `;
+                
+                categoriesTableBody.appendChild(row);
+            });
+            
+            // Update opportunity table
+            const opportunityTableBody = document.getElementById('opportunityTableBody');
+            opportunityTableBody.innerHTML = '';
+            
+            analysisResults.cumulativeData.forEach(tier => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${tier.tier}</td>
+                    <td class="text-right">${tier.employeeCount}</td>
+                    <td class="text-right">${tier.percentage}%</td>
+                    <td class="text-right">${tier.deltaHours}</td>
+                    <td class="text-right">${tier.fte}</td>
+                    <td class="text-right">${formatCurrency(tier.monthlyCost)}</td>
+                `;
+                
+                opportunityTableBody.appendChild(row);
+            });
+            
+            // Update totals
+            document.getElementById('totalEmployees').textContent = analysisResults.totalEmployees;
+            document.getElementById('totalDeltaHours').textContent = analysisResults.totalDeltaHours;
+            document.getElementById('totalFTE').textContent = analysisResults.totalFTE;
+            document.getElementById('totalMonthlyCost').textContent = formatCurrency(analysisResults.totalMonthlyCost);
+            
+            // Update insights
+            const insightsList = document.getElementById('insightsList');
+            insightsList.innerHTML = '';
+            
+            // Add insights
+            const insights = [
+                `<strong>${analysisResults.totalFTE} FTE</strong> of untapped productivity potential across all categories`,
+                `Total monthly cost impact: <strong>${formatCurrency(analysisResults.totalMonthlyCost)}</strong>`,
+                `The largest opportunity group is <strong>${
+                    analysisResults.classifications.find(c => c.classification.includes(goalHoursInput.value))?.classification || 
+                    analysisResults.classifications[2]?.classification
+                }</strong> with ${
+                    analysisResults.classifications.find(c => c.classification.includes(goalHoursInput.value))?.count || 
+                    analysisResults.classifications[2]?.count
+                } employees (${
+                    analysisResults.classifications.find(c => c.classification.includes(goalHoursInput.value))?.percentage || 
+                    analysisResults.classifications[2]?.percentage
+                }%)`,
+                `Total of <strong>${analysisResults.cumulativeData[0]?.employeeCount || 0} employees</strong> below productivity goal`,
+                `Addressing productivity gaps would recover <strong>${analysisResults.totalDeltaHours}</strong> hours`
+            ];
+            
+            insights.forEach(insight => {
+                const li = document.createElement('li');
+                li.innerHTML = insight;
+                insightsList.appendChild(li);
+            });
+            
+            // Update sample data
+            const sampleTableBody = document.getElementById('sampleTableBody');
+            sampleTableBody.innerHTML = '';
+            
+            analysisResults.employeeData.forEach((employee, index) => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>Employee ${index + 1}</td>
+                    <td class="text-right">${employee.productiveHours.toFixed(2)}</td>
+                    <td class="text-right">${employee.meetingHours.toFixed(2)}</td>
+                    <td class="text-right">${employee.combinedHours.toFixed(2)}</td>
+                    <td class="text-right">${employee.delta.toFixed(2)}</td>
+                    <td>${employee.classification}</td>
+                `;
+                
+                sampleTableBody.appendChild(row);
+            });
+            
+            // Show results
+            resultsContainer.classList.remove('hidden');
+            loadingContainer.classList.add('hidden');
+        }
+        
+        // Initialize
+        document.getElementById('displayGoal').textContent = goalHoursInput.value;
+    </script>
+</body>
+</html>
