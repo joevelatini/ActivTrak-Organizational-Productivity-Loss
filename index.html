@@ -131,7 +131,85 @@
             color: white;
             padding: 0 10px;
         }
-        .red-text {
+        .productivity-graph-container {
+            margin-bottom: 30px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .graph-header {
+            background-color: #0070cd;
+            color: white;
+            padding: 10px 15px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .graph-content {
+            padding: 15px;
+        }
+        
+        .graph-columns {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        
+        .graph-col-header {
+            width: 120px;
+            font-weight: bold;
+        }
+        
+        .graph-col-center {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .graph-col-right {
+            width: 200px;
+            text-align: right;
+            font-weight: bold;
+        }
+        
+        .graph-row {
+            display: flex;
+            align-items: center;
+            padding: 12px 0;
+            border-top: 1px dotted #ddd;
+        }
+        
+        .graph-cell-header {
+            width: 120px;
+            font-weight: bold;
+        }
+        
+        .graph-cell-center {
+            flex: 1;
+            position: relative;
+        }
+        
+        .graph-cell-right {
+            width: 200px;
+            text-align: right;
+        }
+        
+        .graph-bar {
+            background-color: #0070cd;
+            height: 30px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            color: white;
+            padding-left: 10px;
+            border-radius: 3px;
+        }
+        
+        .graph-label {
+            margin-bottom: 5px;
+        }
+        
+        .red-value {
             color: #d32f2f;
         }
         .info-card {
@@ -244,6 +322,31 @@
         <!-- Results container -->
         <div id="resultsContainer" class="hidden">
             <h2 style="color: #0070cd;">Productivity Distribution (Goal: <span id="displayGoal">7.5</span> hrs.)</h2>
+            
+            <!-- Productivity Graph -->
+            <div class="productivity-graph-container">
+                <div class="graph-header">
+                    Employees Not Meeting Productive Hours Target (<span id="graphGoalDisplay">7.5</span> hrs.)
+                </div>
+                <div class="graph-content">
+                    <div class="graph-columns">
+                        <div class="graph-col-header">
+                            <div class="graph-label">Productive Hours</div>
+                        </div>
+                        <div class="graph-col-center">
+                            <div class="graph-label">Employee Count</div>
+                        </div>
+                        <div class="graph-col-right">
+                            <div class="graph-label">% of Workforce</div>
+                            <div class="graph-label">Untapped Capacity (FTE/Monthly $)</div>
+                        </div>
+                    </div>
+                    
+                    <div id="graphRows">
+                        <!-- Graph rows will be inserted here by JavaScript -->
+                    </div>
+                </div>
+            </div>
             
             <!-- Distribution Table -->
             <h3>Productivity Categories</h3>
@@ -758,7 +861,9 @@
             if (!analysisResults) return;
             
             // Update goal hours display
-            document.getElementById('displayGoal').textContent = goalHoursInput.value;
+            const goalHours = parseFloat(goalHoursInput.value);
+            document.getElementById('displayGoal').textContent = goalHours;
+            document.getElementById('graphGoalDisplay').textContent = goalHours;
             
             // Update categories table
             const categoriesTableBody = document.getElementById('categoriesTableBody');
@@ -778,6 +883,9 @@
                 
                 categoriesTableBody.appendChild(row);
             });
+            
+            // Update the graph
+            updateProductivityGraph();
             
             // Update opportunity table
             const opportunityTableBody = document.getElementById('opportunityTableBody');
@@ -854,6 +962,59 @@
             // Show results
             resultsContainer.classList.remove('hidden');
             loadingContainer.classList.add('hidden');
+        }
+        
+        function updateProductivityGraph() {
+            const graphRows = document.getElementById('graphRows');
+            graphRows.innerHTML = '';
+            
+            // Get only the categories we want to show in the graph (in reverse order)
+            const graphCategories = [
+                { key: "< 4 hrs", label: "<4" },
+                { key: "< 5 hrs", label: "<5" },
+                { key: "< 6 hrs", label: "<6" },
+                { key: "< 7 hrs", label: "<7" }
+            ];
+            
+            // Find the max count for scaling
+            let maxCount = 0;
+            graphCategories.forEach(cat => {
+                const category = analysisResults.classifications.find(c => c.classification === cat.key);
+                if (category && category.count > maxCount) {
+                    maxCount = category.count;
+                }
+            });
+            
+            // Add a 20% buffer for better visual
+            maxCount = Math.ceil(maxCount * 1.2);
+            
+            // Create rows for each category
+            graphCategories.forEach(cat => {
+                const category = analysisResults.classifications.find(c => c.classification === cat.key);
+                const count = category ? category.count : 0;
+                const percentage = category ? category.percentage : "0";
+                const fte = category ? category.fte : "0";
+                const monthlyCost = category ? formatCurrency(category.monthlyCost) : "$0";
+                
+                // Calculate width percentage
+                const widthPercentage = maxCount > 0 ? (count / maxCount) * 100 : 0;
+                
+                const row = document.createElement('div');
+                row.className = 'graph-row';
+                
+                row.innerHTML = `
+                    <div class="graph-cell-header">${cat.label}</div>
+                    <div class="graph-cell-center">
+                        <div class="graph-bar" style="width: ${widthPercentage}%">${count}</div>
+                    </div>
+                    <div class="graph-cell-right">
+                        <div>${percentage}%</div>
+                        <div>${fte} FTE<br><span class="red-value">${monthlyCost}</span></div>
+                    </div>
+                `;
+                
+                graphRows.appendChild(row);
+            });
         }
         
         // Reset function to start over
