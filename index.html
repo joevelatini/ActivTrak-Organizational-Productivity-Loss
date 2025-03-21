@@ -89,6 +89,9 @@
             background-color: #00529b;
             margin-left: 10px;
         }
+        .reset-button:hover {
+            background-color: #5a6268;
+        }
         .error {
             background-color: #ffebee;
             border-left: 4px solid #f44336;
@@ -223,7 +226,10 @@
                         </select>
                     </div>
                 </div>
-                <button id="analyzeButton" disabled>Analyze Data</button>
+                <div class="button-group">
+                    <button id="analyzeButton" disabled>Analyze Data</button>
+                    <button id="resetButton" class="reset-button" style="background-color: #6c757d;">Reset</button>
+                </div>
             </div>
         </div>
 
@@ -367,6 +373,7 @@
         const productiveHoursColumnSelect = document.getElementById('productiveHoursColumn');
         const meetingHoursColumnSelect = document.getElementById('meetingHoursColumn');
         const analyzeButton = document.getElementById('analyzeButton');
+        const resetButton = document.getElementById('resetButton');
         const errorContainer = document.getElementById('errorContainer');
         const loadingContainer = document.getElementById('loadingContainer');
         const resultsContainer = document.getElementById('resultsContainer');
@@ -377,6 +384,7 @@
         productiveHoursColumnSelect.addEventListener('change', updateAnalyzeButtonState);
         meetingHoursColumnSelect.addEventListener('change', updateAnalyzeButtonState);
         analyzeButton.addEventListener('click', analyzeData);
+        document.getElementById('resetButton').addEventListener('click', resetApplication);
         goalHoursInput.addEventListener('change', () => {
             document.getElementById('displayGoal').textContent = goalHoursInput.value;
         });
@@ -846,6 +854,46 @@
             // Show results
             resultsContainer.classList.remove('hidden');
             loadingContainer.classList.add('hidden');
+        }
+        
+        // Reset function to start over
+        function resetApplication() {
+            // Clear the file input
+            csvFileInput.value = '';
+            
+            // Reset data arrays
+            data = [];
+            headers = [];
+            
+            // Reset selected columns
+            selectedColumns = {
+                productiveHours: '',
+                meetingHours: ''
+            };
+            
+            // Reset column selectors
+            while (productiveHoursColumnSelect.options.length > 1) {
+                productiveHoursColumnSelect.remove(1);
+            }
+            
+            while (meetingHoursColumnSelect.options.length > 1) {
+                meetingHoursColumnSelect.remove(1);
+            }
+            
+            // Reset selections
+            productiveHoursColumnSelect.selectedIndex = 0;
+            meetingHoursColumnSelect.selectedIndex = 0;
+            
+            // Disable analyze button
+            analyzeButton.disabled = true;
+            
+            // Hide results and column selectors
+            resultsContainer.classList.add('hidden');
+            columnSelectors.classList.add('hidden');
+            errorContainer.classList.add('hidden');
+            
+            // Reset analysis results
+            analysisResults = null;
         }
         
         // Initialize
